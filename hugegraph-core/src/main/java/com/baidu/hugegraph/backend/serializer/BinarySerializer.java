@@ -619,12 +619,12 @@ public class BinarySerializer extends AbstractSerializer {
         ConditionQuery cq = (ConditionQuery) query;
 
         // Convert secondary-index or search-index query to id query
-        if (type.isStringIndex()) {
+        if (type.isStringIndex() && !type.isShardIndex()) {
             return this.writeStringIndexQuery(cq);
         }
 
         // Convert range-index query to id range query
-        if (type.isRangeIndex()) {
+        if (type.isRangeIndex() || type.isShardIndex()) {
             return this.writeRangeIndexQuery(cq);
         }
 
@@ -639,7 +639,7 @@ public class BinarySerializer extends AbstractSerializer {
                         "INDEX_LABEL_ID and FIELD_VALUES" +
                         "in secondary index query");
 
-        Id index = (Id) query.condition(HugeKeys.INDEX_LABEL_ID);
+        Id index = query.condition(HugeKeys.INDEX_LABEL_ID);
         Object key = query.condition(HugeKeys.FIELD_VALUES);
 
         E.checkArgument(index != null, "Please specify the index label");
@@ -665,7 +665,7 @@ public class BinarySerializer extends AbstractSerializer {
     }
 
     private Query writeRangeIndexQuery(ConditionQuery query) {
-        Id index = (Id) query.condition(HugeKeys.INDEX_LABEL_ID);
+        Id index = query.condition(HugeKeys.INDEX_LABEL_ID);
         E.checkArgument(index != null,
                         "Please specify the index label");
 
@@ -771,6 +771,7 @@ public class BinarySerializer extends AbstractSerializer {
                 }
                 break;
             case RANGE_INDEX:
+            case SHARD_INDEX:
                 int il = (int) id.asLong();
                 for (int i = 0; i < 4; i++) {
                     /*
