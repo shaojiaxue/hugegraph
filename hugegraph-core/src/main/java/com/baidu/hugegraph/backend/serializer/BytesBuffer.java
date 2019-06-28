@@ -59,6 +59,8 @@ public final class BytesBuffer {
     public static final int DEFAULT_CAPACITY = 64;
     public static final int MAX_BUFFER_CAPACITY = 128 * 1024 * 1024; // 128M
 
+    public static final byte INDEX_ID_SUFFIX_BYTE = (byte) -1;
+
     private ByteBuffer buffer;
 
     public BytesBuffer() {
@@ -361,6 +363,7 @@ public final class BytesBuffer {
                         "Id max length is %s, but got %s {%s}",
                         ID_LEN_MAX, len, id);
         this.write(bytes);
+        this.write(INDEX_ID_SUFFIX_BYTE);
         return this;
     }
 
@@ -368,6 +371,8 @@ public final class BytesBuffer {
         int b = this.peekLast();
         int len = b & ID_LEN_MASK;
         byte[] id = this.read(len + 1);
+        E.checkState(this.read() == INDEX_ID_SUFFIX_BYTE,
+                     "There must be '0xff' suffix behind index id");
         return new BinaryId(id, IdGenerator.of(id, false));
     }
 
